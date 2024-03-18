@@ -46,6 +46,10 @@ async def provide_answer(question: Question):
     try:
         chain = get_qa_chain()
         response = chain(question.question)
+        if "not" in response["result"] and "context" in response["result"]:
+            googleAnswer = google_search(question.question)
+            res = response["result"] + "\nThe following answer has been fetched from google:\n\n" + googleAnswer
+            return {"answer": res}
         return {"answer": response["result"]}
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": f"Error: {str(e)}"})

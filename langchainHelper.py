@@ -1,9 +1,8 @@
-import tempfile
 from langchain_community.document_loaders import UnstructuredFileLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import os
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
-import google.generativeai as genai
+from langchain_community.utilities import GoogleSerperAPIWrapper
 from langchain_community.vectorstores import FAISS
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains import RetrievalQA
@@ -11,8 +10,7 @@ from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
 
 load_dotenv()
-os.getenv("GOOGLE_API_KEY")
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+os.getenv("GOOGLE_API_KEY","SERPER_API_KEY")
 
 model = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0.1)
 
@@ -23,7 +21,7 @@ def get_docs_text(docs):
     text=""
     for file in docs:
         loader = UnstructuredFileLoader(file)
-        text += loader.load()[0].page_content
+        text += "Uploaded File: " + os.path.basename(file) + "\n\n" + loader.load()[0].page_content + "\n\n"
     return  text
 
 def get_text_chunks(text):
@@ -33,7 +31,6 @@ def get_text_chunks(text):
 
 
 def create_vector_db(text_chunks):
-    # vector_store = FAISS.from_documents(documents=text_chunks, embedding=embeddings)
     vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
     vector_store.save_local("faiss_index")
 
@@ -60,3 +57,8 @@ def get_qa_chain():
                                         chain_type_kwargs={"prompt": PROMPT})
 
     return chain
+
+def google_search(question):
+    search = GoogleSerperAPIWrapper()
+    ans = search.run(question)
+    return ans
