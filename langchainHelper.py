@@ -5,7 +5,6 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.utilities import GoogleSerperAPIWrapper
 from langchain_community.vectorstores import Chroma
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.chains.question_answering import load_qa_chain
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
@@ -35,7 +34,10 @@ def create_vector_db(text_chunks):
     db2 = Chroma.from_texts(text_chunks, embeddings, persist_directory="./chroma_db")
     db2.persist()
 
-def get_conversational_chain():
+def get_qa_chain():
+    new_db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
+    retriever = new_db.as_retriever(score_threshold=0.7)
+
     prompt_template = """
     Answer the question as detailed as possible from the provided context, make sure to provide all the details, if the answer is not in
     provided context just say, "answer is not available in the context", don't provide the wrong answer\n\n
@@ -45,17 +47,15 @@ def get_conversational_chain():
     Answer:
     """
 
-    PROMPT = PromptTemplate(template = prompt_template, input_variables = ["context", "question"])
+    PROMPT = PromptTemplate(template = prompt_template, input_variables = ["context","question"])
 
-    chain = load_qa_chain(model, chain_type="stuff", prompt=PROMPT)
+    chain = RetrievalQA.from_chain_type(llm=model,
+                                        chain_type="stuff",
+                                        retriever=retriever,
+                                        input_key="query",
+                                        chain_type_kwargs={"prompt": PROMPT})
+
     return chain
-
-def user_input(user_question):
-    new_db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
-    docs = new_db.similarity_search(user_question,k=4)
-    chain = get_conversational_chain()
-    response = chain({"input_documents":docs, "question": user_question}, return_only_outputs=True)
-    return response
 
 def google_search(question):
     search = GoogleSerperAPIWrapper()
@@ -112,5 +112,5 @@ def get_faq():
 
     return chain
 
-# chain = get_faq()
-# print(chain("Question and Answers")["result"])
+chain = get_qa_chain()
+print(chain("what is css?")["result"])

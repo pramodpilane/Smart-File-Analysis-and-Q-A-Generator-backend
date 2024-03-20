@@ -43,12 +43,13 @@ class Question(BaseModel):
 @app.post("/answer")
 async def provide_answer(question: Question):
     try:
-        response = user_input(question.question)
-        if "not" in response["output_text"] and "context" in response["output_text"]:
+        chain = get_qa_chain()
+        response = chain(question.question)
+        if "not" in response["result"] and "context" in response["result"]:
             googleAnswer = google_search(question.question)
-            response["output_text"] += "\nThe following answer has been fetched from google:\n\n" + googleAnswer
-            return {"answer": response["output_text"]}
-        return {"answer": response["output_text"]}
+            response["result"] += "\nThe following answer has been fetched from google:\n\n" + googleAnswer
+            return {"answer": response["result"]}
+        return {"answer": response["result"]}
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": f"Error: {str(e)}"})
     
