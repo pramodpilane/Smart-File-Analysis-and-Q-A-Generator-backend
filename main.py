@@ -34,7 +34,6 @@ async def upload_files(files: list[UploadFile] = File(...)):
         raw_text = get_docs_text(file_locations)  
         text_chunks = get_text_chunks(raw_text)
         create_vector_db(text_chunks)
-        return JSONResponse(status_code=200, content={"message": "Files uploaded successfully"})
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": f"Failed to upload files: {str(e)}"})
     
@@ -44,12 +43,21 @@ class Question(BaseModel):
 @app.post("/answer")
 async def provide_answer(question: Question):
     try:
-        chain = get_qa_chain()
-        response = chain(question.question)
-        if "not" in response["result"] and "context" in response["result"]:
+        response = user_input(question.question)
+        if "not" in response["output_text"] and "context" in response["output_text"]:
             googleAnswer = google_search(question.question)
-            res = response["result"] + "\nThe following answer has been fetched from google:\n\n" + googleAnswer
-            return {"answer": res}
-        return {"answer": response["result"]}
+            response["output_text"] += "\nThe following answer has been fetched from google:\n\n" + googleAnswer
+            return {"answer": response["output_text"]}
+        return {"answer": response["output_text"]}
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": f"Error: {str(e)}"})
+    
+@app.post("/faq")
+async def provide_faq():
+    try:
+        chain = get_faq()
+        response = chain("Question and Answers")
+        return {"QnA": response["result"]}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"message": f"Error: {str(e)}"})
+
