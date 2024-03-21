@@ -3,6 +3,7 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import random
 
 app = FastAPI()
 
@@ -43,22 +44,39 @@ class Question(BaseModel):
 @app.post("/answer")
 async def provide_answer(question: Question):
     try:
-        chain = get_qa_chain()
-        response = chain(question.question)
-        if "not" in response["result"] and "context" in response["result"]:
+        response = user_input(question.question)
+        if "not" in response["output_text"] and "context" in response["output_text"]:
             googleAnswer = google_search(question.question)
-            response["result"] += "\nThe following answer has been fetched from google:\n\n" + googleAnswer
-            return {"answer": response["result"]}
-        return {"answer": response["result"]}
+            response["output_text"] += "\nThe following answer has been fetched from google:\n\n" + googleAnswer
+            return {"answer": response["output_text"]}
+        return {"answer": response["output_text"]}
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": f"Error: {str(e)}"})
     
-@app.post("/faq")
+@app.get("/faq")
 async def provide_faq():
     try:
         chain = get_faq()
         response = chain("Question and Answers")
         return {"QnA": response["result"]}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"message": f"Error: {str(e)}"})
+    
+@app.get("/suggest")
+async def provide_suggestion():
+    try:
+        chain = get_headings()
+        topics = eval(chain("headings")["result"].strip())
+        return {"suggestion": random.choice(topics)}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"message": f"Error: {str(e)}"})
+
+@app.get("/keypw")
+async def provide_faq():
+    try:
+        chain = get_keyPW()
+        response = chain("summary")
+        return {"keyPW": response["result"]}
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": f"Error: {str(e)}"})
 
