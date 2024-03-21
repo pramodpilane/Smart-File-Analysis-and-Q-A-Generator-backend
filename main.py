@@ -53,6 +53,15 @@ async def provide_answer(question: Question):
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": f"Error: {str(e)}"})
     
+@app.get("/quiz")
+async def provide_faq():
+    try:
+        chain = get_quizz()
+        response = chain("multiple choice questions")
+        return {"quiz": response["result"]}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"message": f"Error: {str(e)}"})
+    
 @app.get("/faq")
 async def provide_faq():
     try:

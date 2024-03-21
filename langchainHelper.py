@@ -114,33 +114,6 @@ def get_faq():
 
     return chain
 
-# what are names of files uploaded
-def get_summary():
-    new_db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
-    retriever = new_db.as_retriever(score_threshold=0.7)
-
-    prompt_template = """
-    Given the text from the provided context, parse it to extract important and conceptual {question} as much as possible. 
-    Create and return a comprehensive list of question and answer in the way as provided below. 
-            [["Question1: question?", "Answer: answer in brief"],
-             ["Question2: question?", "Answer: answer in brief"],
-             ["Question3: question?", "Answer: answer in brief"]]
-
-    Context:\n {context}?\n
-
-    Answer:
-    """
-
-    PROMPT = PromptTemplate(template = prompt_template, input_variables = ["context","question"])
-
-    chain = RetrievalQA.from_chain_type(llm=model,
-                                        chain_type="stuff",
-                                        retriever=retriever,
-                                        input_key="query",
-                                        chain_type_kwargs={"prompt": PROMPT})
-
-    return chain
-
 def get_keyPW():
     new_db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
     retriever = new_db.as_retriever(score_threshold=0.7)
@@ -172,3 +145,32 @@ def get_keyPW():
 
     return chain
 
+def get_quizz():    
+    new_db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
+    retriever = new_db.as_retriever(score_threshold=0.7)
+
+    prompt_template = """
+    Given the text from the provided context, parse it to extract important and conceptual questions to form {question}. 
+    Create and return only 10 multiple-choice questions in the format provided below:
+
+    [[0,"question?",["option", "option", "option", "option"],"option"],
+     [1,"question?",["option", "option", "option", "option"],"option"],
+     [2,"question?",["option", "option", "option", "option"],"option"]]
+
+    Context:
+    {context}?
+
+    Answer:
+"""
+
+
+
+    PROMPT = PromptTemplate(template = prompt_template, input_variables = ["context","question"])
+
+    chain = RetrievalQA.from_chain_type(llm=model,
+                                        chain_type="stuff",
+                                        retriever=retriever,
+                                        input_key="query",
+                                        chain_type_kwargs={"prompt": PROMPT})
+
+    return chain
