@@ -88,4 +88,3 @@ async def provide_faq():
         return {"keyPW": response["result"]}
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": f"Error: {str(e)}"})
-
