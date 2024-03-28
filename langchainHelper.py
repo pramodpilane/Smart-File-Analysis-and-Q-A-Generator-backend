@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 os.getenv("GOOGLE_API_KEY","SERPER_API_KEY")
 
-model = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0.1)
+model = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0.01)
 
 embeddings = GoogleGenerativeAIEmbeddings(model = "models/embedding-001")
 
@@ -127,9 +127,8 @@ def get_keyPW():
             ** KEYWORDS **
             word = definition  
             word = definition 
-            word = definition 
-            word = definition 
-            ** KEY POINTS **
+            word = definition
+            ** KEYPOINTS **
             - Summary point 1
             - Summary point 2
             - Summary point 3
