@@ -3,6 +3,7 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from pathlib import Path
 import random
 
 app = FastAPI()
@@ -37,7 +38,15 @@ async def upload_files(files: list[UploadFile] = File(...)):
         create_vector_db(text_chunks)
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": f"Failed to upload files: {str(e)}"})
-    
+
+@app.get("/check_bin_folder")
+async def check_bin_folder():
+    bin_folder_path = "C:/Users/user/OneDrive/Desktop/internshipProject/Smart-File-Analysis-and-Q-A-Generator/backend/bin" # Change this to the actual path
+    if os.path.exists(bin_folder_path) and os.listdir(bin_folder_path):
+        return {"bin_folder_has_files": True}
+    else:
+        return {"bin_folder_has_files": False}
+  
 class Question(BaseModel):
     question: str
 
